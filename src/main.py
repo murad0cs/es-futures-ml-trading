@@ -84,7 +84,15 @@ class TradingSystemPipeline:
         X_ec, y_ec = self.feature_engineer.prepare_training_data(train_df, 'entry_confidence')
         
         print("Training entry confidence models...")
-        ec_results = entry_model.train(X_ec.fillna(0), y_ec.fillna(0))
+        # Handle categorical columns properly
+        X_ec_filled = X_ec.copy()
+        for col in X_ec_filled.columns:
+            if X_ec_filled[col].dtype.name == 'category':
+                X_ec_filled[col] = X_ec_filled[col].cat.add_categories([0]).fillna(0)
+            else:
+                X_ec_filled[col] = X_ec_filled[col].fillna(0)
+        
+        ec_results = entry_model.train(X_ec_filled, y_ec.fillna(0))
         
         print("\nEntry Confidence Model Performance:")
         for model_name, metrics in ec_results.items():
