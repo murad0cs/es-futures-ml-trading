@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime
+from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -39,10 +39,20 @@ class TradingSystemPipeline:
         print("="*80)
         
         print("\n1. Loading and preparing data...")
+        # Option 1: Use last 7 days of 1-minute data (REAL DATA)
+        # df = self.data_loader.load_data(
+        #     symbol='ES=F',
+        #     start_date=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'),
+        #     end_date=datetime.now().strftime('%Y-%m-%d'),
+        #     interval='1m'
+        # )
+        
+        # Option 2: Use 1 year of hourly data (REAL DATA, more history)
         df = self.data_loader.load_data(
             symbol='ES=F',
             start_date='2024-01-01',
-            end_date='2024-12-31'
+            end_date='2024-12-31',
+            interval='1h'  # Changed to hourly for real data
         )
         print(f"Loaded {len(df)} data points")
         
@@ -88,9 +98,17 @@ class TradingSystemPipeline:
         X_ec_filled = X_ec.copy()
         for col in X_ec_filled.columns:
             if X_ec_filled[col].dtype.name == 'category':
-                X_ec_filled[col] = X_ec_filled[col].cat.add_categories([0]).fillna(0)
+                # Convert categorical to numeric codes
+                X_ec_filled[col] = X_ec_filled[col].cat.codes
+            elif X_ec_filled[col].dtype == 'object':
+                # Convert string columns to numeric codes
+                X_ec_filled[col] = pd.Categorical(X_ec_filled[col]).codes
             else:
                 X_ec_filled[col] = X_ec_filled[col].fillna(0)
+        
+        # Ensure all values are numeric and finite
+        X_ec_filled = X_ec_filled.fillna(0)
+        X_ec_filled = X_ec_filled.replace([np.inf, -np.inf], 0)
         
         ec_results = entry_model.train(X_ec_filled, y_ec.fillna(0))
         
@@ -286,6 +304,62 @@ class TradingSystemPipeline:
         plt.show()
         
         print("\n✓ Performance report saved as 'es_futures_ml_performance_report.png'")
+        
+        # Save results to CSV files
+        import os
+        os.makedirs('results', exist_ok=True)
+        
+        # Save trade results
+        if len(baseline_result['trades']) > 0:
+            baseline_result['trades'].to_csv('results/baseline_trades.csv', index=False)
+            print("✓ Baseline trades saved to 'results/baseline_trades.csv'")
+        
+        if len(ml_result['trades']) > 0:
+            ml_result['trades'].to_csv('results/ml_enhanced_trades.csv', index=False)
+            print("✓ ML-enhanced trades saved to 'results/ml_enhanced_trades.csv'")
+        
+        # Save equity curves
+        baseline_result['equity_curve'].to_csv('results/baseline_equity_curve.csv')
+        ml_result['equity_curve'].to_csv('results/ml_enhanced_equity_curve.csv')
+        print("✓ Equity curves saved to 'results/' directory")
+        
+        # Save performance metrics
+        metrics_df = pd.DataFrame({
+            'Baseline': baseline_metrics,
+            'ML_Enhanced': ml_metrics
+        })
+        metrics_df.to_csv('results/performance_metrics.csv')
+        print("✓ Performance metrics saved to 'results/performance_metrics.csv'")
+        
+        # Save trained models
+        import pickle
+        os.makedirs('models/saved', exist_ok=True)
+        
+        # Save stop loss model
+        with open('models/saved/stop_loss_model.pkl', 'wb') as f:
+            pickle.dump(stop_loss_model, f)
+        print("✓ Stop loss model saved to 'models/saved/stop_loss_model.pkl'")
+        
+        # Save entry confidence model
+        with open('models/saved/entry_confidence_model.pkl', 'wb') as f:
+            pickle.dump(entry_model, f)
+        print("✓ Entry confidence model saved to 'models/saved/entry_confidence_model.pkl'")
+        
+        # Save position sizer
+        with open('models/saved/position_sizer.pkl', 'wb') as f:
+            pickle.dump(position_sizer, f)
+        print("✓ Position sizer saved to 'models/saved/position_sizer.pkl'")
+        
+        # Save model predictions on test data
+        test_predictions = pd.DataFrame({
+            'timestamp': test_df.index[:len(test_signals)],
+            'signal': test_signals.index,
+            'ml_confidence': ml_result.get('confidence_scores', []),
+            'ml_stop_loss': ml_result.get('stop_losses', []),
+            'ml_position_size': ml_result.get('position_sizes', [])
+        })
+        test_predictions.to_csv('results/ml_predictions.csv', index=False)
+        print("✓ ML predictions saved to 'results/ml_predictions.csv'")
 
 def main():
     pipeline = TradingSystemPipeline()

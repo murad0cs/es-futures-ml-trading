@@ -20,6 +20,19 @@ class DataLoader:
         if end_date is None:
             end_date = datetime.now().strftime('%Y-%m-%d')
         
+        # Check if we have saved synthetic data
+        import os
+        data_dir = 'data/synthetic'
+        os.makedirs(data_dir, exist_ok=True)
+        
+        synthetic_file = f"{data_dir}/es_futures_synthetic_{start_date}_{end_date}_{interval}.csv"
+        
+        # Load saved synthetic data if it exists
+        if os.path.exists(synthetic_file):
+            print(f"Loading saved synthetic data from {synthetic_file}")
+            df = pd.read_csv(synthetic_file, index_col=0, parse_dates=True)
+            return df
+        
         try:
             ticker = yf.Ticker(symbol)
             df = ticker.history(start=start_date, end=end_date, interval=interval)
@@ -27,6 +40,9 @@ class DataLoader:
             if df.empty:
                 print(f"No data retrieved for {symbol}. Generating synthetic data...")
                 df = self.generate_synthetic_data(start_date, end_date)
+                # Save synthetic data
+                df.to_csv(synthetic_file)
+                print(f"Synthetic data saved to {synthetic_file}")
             
             df.columns = df.columns.str.lower()
             
@@ -38,7 +54,11 @@ class DataLoader:
             
         except Exception as e:
             print(f"Error loading data: {e}. Generating synthetic data...")
-            return self.generate_synthetic_data(start_date, end_date)
+            df = self.generate_synthetic_data(start_date, end_date)
+            # Save synthetic data
+            df.to_csv(synthetic_file)
+            print(f"Synthetic data saved to {synthetic_file}")
+            return df
     
     def generate_synthetic_data(self, start_date: str, end_date: str) -> pd.DataFrame:
         start = pd.to_datetime(start_date)

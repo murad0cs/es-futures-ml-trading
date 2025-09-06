@@ -75,7 +75,7 @@ class EntryConfidenceModel:
             
             model = xgb.XGBClassifier(**params, random_state=self.config.random_seed,
                                      use_label_encoder=False, eval_metric='logloss',
-                                     callbacks=[xgb.callback.EarlyStopping(rounds=50, save_best=True)])
+                                     early_stopping_rounds=50)
             model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
             
             y_pred_proba = model.predict_proba(X_val)[:, 1]
@@ -83,12 +83,12 @@ class EntryConfidenceModel:
             return roc_auc
         
         study = optuna.create_study(direction='maximize')
-        study.optimize(objective, n_trials=50, show_progress_bar=False)
+        study.optimize(objective, n_trials=10, show_progress_bar=False)
         
         best_params = study.best_params
         model = xgb.XGBClassifier(**best_params, random_state=self.config.random_seed,
                                  use_label_encoder=False, eval_metric='logloss',
-                                 callbacks=[xgb.callback.EarlyStopping(rounds=50, save_best=True)])
+                                 early_stopping_rounds=50)
         model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
         
         y_pred = model.predict(X_val)
@@ -127,7 +127,7 @@ class EntryConfidenceModel:
             return roc_auc
         
         study = optuna.create_study(direction='maximize')
-        study.optimize(objective, n_trials=50, show_progress_bar=False)
+        study.optimize(objective, n_trials=10, show_progress_bar=False)
         
         best_params = study.best_params
         model = lgb.LGBMClassifier(**best_params, random_state=self.config.random_seed,
@@ -197,7 +197,7 @@ class EntryConfidenceModel:
             return roc_auc
         
         study = optuna.create_study(direction='maximize')
-        study.optimize(objective, n_trials=20, show_progress_bar=False)
+        study.optimize(objective, n_trials=5, show_progress_bar=False)
         
         model = create_model(study.best_trial)
         class_weight = {0: 1.0, 1: study.best_trial.params.get('class_weight', 2.0)}
