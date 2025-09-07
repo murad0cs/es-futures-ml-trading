@@ -550,7 +550,7 @@ class ProfessionalMLTradingSystem:
         self._save_comprehensive_results()
         
         print("[OK] Comprehensive performance report generated!")
-        print("📄 Report saved as 'professional_ml_trading_report.png'")
+        print("Report saved as 'professional_ml_trading_report.png'")
     
     def _save_comprehensive_results(self):
         """Save all results, models, and analysis to files"""
@@ -638,15 +638,15 @@ class ProfessionalMLTradingSystem:
             execution_time = (end_time - start_time).total_seconds()
             
             print("\n" + "="*80)
-            print("🎉 PROFESSIONAL ML TRADING SYSTEM - EXECUTION COMPLETE")
+            print("PROFESSIONAL ML TRADING SYSTEM - EXECUTION COMPLETE")
             print("="*80)
             
-            print(f"\n⏱️  Total Execution Time: {execution_time:.1f} seconds")
+            print(f"\nTotal Execution Time: {execution_time:.1f} seconds")
             print(f"[INFO] Data Points Processed: {len(df):,}")
             print(f"[TARGET] Achievement Rate: {target_validation['success_rate']:.1f}%")
             print(f"[METRIC] ML Strategy Sharpe Ratio: {ml_metrics.get('sharpe_ratio', 0):.3f}")
-            print(f"💰 ML Strategy Total Return: {ml_metrics.get('total_return', 0):.2f}%")
-            print(f"📉 Maximum Drawdown: {abs(ml_metrics.get('max_drawdown', 0)):.2f}%")
+            print(f"ML Strategy Total Return: {ml_metrics.get('total_return', 0):.2f}%")
+            print(f"Maximum Drawdown: {abs(ml_metrics.get('max_drawdown', 0)):.2f}%")
             
             if target_validation['success_rate'] >= 80:
                 print("\n[STATUS] EXCELLENT - Ready for live trading consideration")

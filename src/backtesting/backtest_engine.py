@@ -59,8 +59,8 @@ class BacktestEngine:
         for i in range(len(df)):
             current_row = df.iloc[i]
             
-            if current_position is None and i in signals.index:
-                signal = signals.loc[i]
+            if current_position is None and current_row.name in signals.index:
+                signal = signals.loc[current_row.name]
                 
                 if signal.get('confidence_score', 1.0) < 0.5:
                     continue
