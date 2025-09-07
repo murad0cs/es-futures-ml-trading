@@ -77,7 +77,7 @@ class DynamicStopLossModel:
             return mse
         
         study = optuna.create_study(direction='minimize')
-        study.optimize(objective, n_trials=10, show_progress_bar=False)
+        study.optimize(objective, n_trials=3, show_progress_bar=False)
         
         best_params = study.best_params
         model = xgb.XGBRegressor(**best_params, random_state=self.config.random_seed,
@@ -120,7 +120,7 @@ class DynamicStopLossModel:
             return mse
         
         study = optuna.create_study(direction='minimize')
-        study.optimize(objective, n_trials=10, show_progress_bar=False)
+        study.optimize(objective, n_trials=3, show_progress_bar=False)
         
         best_params = study.best_params
         model = lgb.LGBMRegressor(**best_params, random_state=self.config.random_seed, verbosity=-1)
@@ -186,7 +186,7 @@ class DynamicStopLossModel:
             return min(history.history['val_loss'])
         
         study = optuna.create_study(direction='minimize')
-        study.optimize(objective, n_trials=5, show_progress_bar=False)
+        study.optimize(objective, n_trials=2, show_progress_bar=False)
         
         model = create_model(study.best_trial)
         early_stopping = keras.callbacks.EarlyStopping(

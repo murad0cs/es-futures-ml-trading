@@ -199,7 +199,7 @@ This project is for educational and research purposes only. Not financial advice
 
 ## Author
 
-ML Trading System Development Team
+/murad0cs
 
 ## Contact
 

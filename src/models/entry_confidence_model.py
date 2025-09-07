@@ -83,7 +83,7 @@ class EntryConfidenceModel:
             return roc_auc
         
         study = optuna.create_study(direction='maximize')
-        study.optimize(objective, n_trials=10, show_progress_bar=False)
+        study.optimize(objective, n_trials=3, show_progress_bar=False)
         
         best_params = study.best_params
         model = xgb.XGBClassifier(**best_params, random_state=self.config.random_seed,
@@ -126,7 +126,7 @@ class EntryConfidenceModel:
             return roc_auc
         
         study = optuna.create_study(direction='maximize')
-        study.optimize(objective, n_trials=10, show_progress_bar=False)
+        study.optimize(objective, n_trials=3, show_progress_bar=False)
         
         best_params = study.best_params
         model = lgb.LGBMClassifier(**best_params, random_state=self.config.random_seed,
@@ -196,7 +196,7 @@ class EntryConfidenceModel:
             return roc_auc
         
         study = optuna.create_study(direction='maximize')
-        study.optimize(objective, n_trials=5, show_progress_bar=False)
+        study.optimize(objective, n_trials=2, show_progress_bar=False)
         
         model = create_model(study.best_trial)
         class_weight = {0: 1.0, 1: study.best_trial.params.get('class_weight', 2.0)}

@@ -161,13 +161,38 @@ class BacktestEngine:
         
         df = df.copy()
         
-        X_stop_loss = df[self.config.stop_loss_features].fillna(0)
+        # Prepare stop loss features
+        X_stop_loss = df[self.config.stop_loss_features].copy()
+        # Handle categorical columns for stop loss
+        for col in X_stop_loss.columns:
+            if X_stop_loss[col].dtype.name == 'category':
+                X_stop_loss[col] = X_stop_loss[col].cat.codes
+            elif X_stop_loss[col].dtype == 'object':
+                X_stop_loss[col] = pd.Categorical(X_stop_loss[col]).codes
+        X_stop_loss = X_stop_loss.fillna(0)
+        # Replace infinity values with 0
+        X_stop_loss = X_stop_loss.replace([np.inf, -np.inf], 0)
         dynamic_stops = stop_loss_model.predict(X_stop_loss)
         
-        X_confidence = df[self.config.entry_confidence_features].fillna(0)
+        # Prepare confidence features
+        X_confidence = df[self.config.entry_confidence_features].copy()
+        # Handle categorical columns for confidence
+        for col in X_confidence.columns:
+            if X_confidence[col].dtype.name == 'category':
+                X_confidence[col] = X_confidence[col].cat.codes
+            elif X_confidence[col].dtype == 'object':
+                X_confidence[col] = pd.Categorical(X_confidence[col]).codes
+        X_confidence = X_confidence.fillna(0)
+        # Replace infinity values with 0
+        X_confidence = X_confidence.replace([np.inf, -np.inf], 0)
         confidence_scores = entry_confidence_model.predict_proba(X_confidence)
         
-        filtered_signals = signals[confidence_scores >= 0.5]
+        # Convert confidence scores to pandas Series for proper indexing
+        confidence_series = pd.Series(confidence_scores, index=df.index)
+        
+        # Only get confidence scores for signal indices
+        signal_confidence_scores = confidence_series.loc[signals.index]
+        filtered_signals = signals[signal_confidence_scores >= 0.5]
         
         position_sizes = []
         for i in range(len(df)):

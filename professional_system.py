@@ -79,16 +79,16 @@ class ProfessionalMLTradingSystem:
         # Use 1 year of hourly data for comprehensive training
         df = self.data_loader.load_data(
             symbol='ES=F',
-            start_date='2024-01-01',
+            start_date='2024-10-01',
             end_date='2024-12-31',
             interval='1h'
         )
-        print(f"✓ Loaded {len(df)} data points")
+        print(f"[OK] Loaded {len(df)} data points")
         
         print("\n2. Engineering features...")
         df = self.feature_engineer.create_features(df)
         df = self.data_loader.add_external_features(df)
-        print(f"✓ Created {len(df.columns)} features")
+        print(f"[OK] Created {len(df.columns)} features")
         
         print("\n3. Preparing train/test split...")
         train_df, test_df = self.data_loader.prepare_train_test_split(df)
@@ -96,8 +96,8 @@ class ProfessionalMLTradingSystem:
         print("\n4. Generating trade signals...")
         train_signals = self.data_loader.generate_trade_signals(train_df)
         test_signals = self.data_loader.generate_trade_signals(test_df)
-        print(f"✓ Generated {len(train_signals)} training signals")
-        print(f"✓ Generated {len(test_signals)} test signals")
+        print(f"[OK] Generated {len(train_signals)} training signals")
+        print(f"[OK] Generated {len(test_signals)} test signals")
         
         return df, train_df, test_df, train_signals, test_signals
     
@@ -122,19 +122,19 @@ class ProfessionalMLTradingSystem:
         # Train ensemble of models
         sl_results = self.stop_loss_model.train(X_sl_clean, y_sl_clean)
         
-        print("\n📊 Stop-Loss Model Performance:")
+        print("\n[METRICS] Stop-Loss Model Performance:")
         print("-" * 40)
         for model_name, metrics in sl_results.items():
             print(f"{model_name:15s}: RMSE={metrics['val_rmse']:.4f}, MAE={metrics['val_mae']:.4f}")
         
-        print(f"\n🏆 Best Model: {self.stop_loss_model.best_model_name}")
+        print(f"\n[BEST] Model: {self.stop_loss_model.best_model_name}")
         
         # Display feature importance
         if hasattr(self.stop_loss_model, 'feature_importance'):
             # Check if the best model has feature importance (ensemble doesn't)
             if self.stop_loss_model.best_model_name in self.stop_loss_model.feature_importance:
                 top_features = self.stop_loss_model.feature_importance[self.stop_loss_model.best_model_name].head(10)
-                print(f"\n📈 Top 10 Features for {self.stop_loss_model.best_model_name}:")
+                print(f"\n[FEATURES] Top 10 Features for {self.stop_loss_model.best_model_name}:")
                 for _, row in top_features.iterrows():
                     print(f"  {row['feature']:20s}: {row['importance']:.4f}")
             else:
@@ -142,7 +142,7 @@ class ProfessionalMLTradingSystem:
                 if self.stop_loss_model.feature_importance:
                     first_model = list(self.stop_loss_model.feature_importance.keys())[0]
                     top_features = self.stop_loss_model.feature_importance[first_model].head(10)
-                    print(f"\n📈 Top 10 Features (from {first_model}):")
+                    print(f"\n[FEATURES] Top 10 Features (from {first_model}):")
                     for _, row in top_features.iterrows():
                         print(f"  {row['feature']:20s}: {row['importance']:.4f}")
         
@@ -179,21 +179,21 @@ class ProfessionalMLTradingSystem:
         # Train ensemble of models
         ec_results = self.entry_confidence_model.train(X_ec_clean, y_ec_clean)
         
-        print("\n📊 Entry Confidence Model Performance:")
+        print("\n[METRICS] Entry Confidence Model Performance:")
         print("-" * 50)
         for model_name, metrics in ec_results.items():
             print(f"{model_name:15s}: Accuracy={metrics['val_accuracy']:.2%}, "
                   f"ROC-AUC={metrics['val_roc_auc']:.4f}, "
                   f"Precision={metrics['val_precision']:.2%}")
         
-        print(f"\n🏆 Best Model: {self.entry_confidence_model.best_model_name}")
+        print(f"\n[BEST] Model: {self.entry_confidence_model.best_model_name}")
         
         # Display feature importance
         if hasattr(self.entry_confidence_model, 'feature_importance'):
             # Check if the best model has feature importance (ensemble doesn't)
             if self.entry_confidence_model.best_model_name in self.entry_confidence_model.feature_importance:
                 top_features = self.entry_confidence_model.feature_importance[self.entry_confidence_model.best_model_name].head(10)
-                print(f"\n📈 Top 10 Features for {self.entry_confidence_model.best_model_name}:")
+                print(f"\n[FEATURES] Top 10 Features for {self.entry_confidence_model.best_model_name}:")
                 for _, row in top_features.iterrows():
                     print(f"  {row['feature']:20s}: {row['importance']:.4f}")
             else:
@@ -201,7 +201,7 @@ class ProfessionalMLTradingSystem:
                 if self.entry_confidence_model.feature_importance:
                     first_model = list(self.entry_confidence_model.feature_importance.keys())[0]
                     top_features = self.entry_confidence_model.feature_importance[first_model].head(10)
-                    print(f"\n📈 Top 10 Features (from {first_model}):")
+                    print(f"\n[FEATURES] Top 10 Features (from {first_model}):")
                     for _, row in top_features.iterrows():
                         print(f"  {row['feature']:20s}: {row['importance']:.4f}")
         
@@ -216,9 +216,9 @@ class ProfessionalMLTradingSystem:
         print("Objective: Kelly Criterion optimization with dynamic risk management")
         
         self.position_sizer = AdaptivePositionSizer(self.config)
-        print("✓ Position sizing module initialized with Kelly Criterion")
-        print("✓ Dynamic risk adjustment based on portfolio volatility")
-        print("✓ Maximum position size limits enforced")
+        print("[OK] Position sizing module initialized with Kelly Criterion")
+        print("[OK] Dynamic risk adjustment based on portfolio volatility")
+        print("[OK] Maximum position size limits enforced")
         
         return {'status': 'initialized', 'method': 'kelly_criterion'}
     
@@ -228,7 +228,7 @@ class ProfessionalMLTradingSystem:
         print("COMPREHENSIVE BACKTESTING")
         print("="*50)
         
-        print("\n🔄 Running baseline backtest...")
+        print("\n[RUNNING] Baseline backtest...")
         baseline_result = self.backtest_engine.run_backtest(
             df=test_df,
             signals=test_signals
@@ -239,7 +239,7 @@ class ProfessionalMLTradingSystem:
             baseline_result['trades']
         )
         
-        print("\n🔄 Running ML-enhanced backtest...")
+        print("\n[RUNNING] ML-enhanced backtest...")
         ml_result = self.backtest_engine.run_ml_enhanced_backtest(
             df=test_df,
             signals=test_signals,
@@ -284,7 +284,7 @@ class ProfessionalMLTradingSystem:
         achieved_count = 0
         total_targets = len(targets)
         
-        print("\n📊 Performance vs Targets:")
+        print("\n[METRICS] Performance vs Targets:")
         print("-" * 60)
         
         for metric, data in targets.items():
@@ -293,11 +293,11 @@ class ProfessionalMLTradingSystem:
             higher_better = data['higher_better']
             
             if higher_better:
-                status = "✅ ACHIEVED" if achieved >= target else "❌ NOT MET"
+                status = "[ACHIEVED]" if achieved >= target else "[NOT MET]"
                 if achieved >= target:
                     achieved_count += 1
             else:
-                status = "✅ ACHIEVED" if achieved <= target else "❌ NOT MET"
+                status = "[ACHIEVED]" if achieved <= target else "[NOT MET]"
                 if achieved <= target:
                     achieved_count += 1
             
@@ -310,14 +310,14 @@ class ProfessionalMLTradingSystem:
         success_rate = (achieved_count / total_targets) * 100
         
         print("\n" + "="*60)
-        print(f"🎯 TARGET ACHIEVEMENT: {achieved_count}/{total_targets} ({success_rate:.1f}%)")
+        print(f"[TARGET] ACHIEVEMENT: {achieved_count}/{total_targets} ({success_rate:.1f}%)")
         
         if success_rate >= 80:
-            print("🏆 EXCELLENT: System meets most performance targets!")
+            print("[EXCELLENT]: System meets most performance targets!")
         elif success_rate >= 60:
-            print("✅ GOOD: System meets majority of performance targets")
+            print("[GOOD]: System meets majority of performance targets")
         else:
-            print("⚠️  NEEDS IMPROVEMENT: Consider model tuning or parameter adjustment")
+            print("[WARNING] NEEDS IMPROVEMENT: Consider model tuning or parameter adjustment")
         
         return {
             'targets_met': achieved_count,
@@ -475,8 +475,16 @@ class ProfessionalMLTradingSystem:
         }
         
         colors = ['blue', 'green', 'orange', 'purple']
-        plt.pie(np.abs(attribution_data['Contribution']), labels=attribution_data['Strategy Component'], 
-                colors=colors, autopct='%1.1f%%', startangle=90)
+        # Check if we have valid data for the pie chart
+        contributions = np.abs(attribution_data['Contribution'])
+        if np.all(contributions == 0) or np.any(np.isnan(contributions)):
+            # If no valid data, show a message
+            plt.text(0.5, 0.5, 'No trades executed\nNo data to display', 
+                    ha='center', va='center', fontsize=12)
+            plt.axis('off')
+        else:
+            plt.pie(contributions, labels=attribution_data['Strategy Component'], 
+                    colors=colors, autopct='%1.1f%%', startangle=90)
         plt.title('Performance Attribution', fontsize=12, fontweight='bold')
         
         # 11. Risk-adjusted metrics radar chart
@@ -541,7 +549,7 @@ class ProfessionalMLTradingSystem:
         # Save detailed results
         self._save_comprehensive_results()
         
-        print("✅ Comprehensive performance report generated!")
+        print("[OK] Comprehensive performance report generated!")
         print("📄 Report saved as 'professional_ml_trading_report.png'")
     
     def _save_comprehensive_results(self):
@@ -594,8 +602,8 @@ class ProfessionalMLTradingSystem:
             import json
             json.dump(self.training_results, f, indent=2, default=str)
         
-        print("✅ All results saved to 'results/professional/'")
-        print("✅ All models saved to 'models/professional/'")
+        print("[OK] All results saved to 'results/professional/'")
+        print("[OK] All models saved to 'models/professional/'")
     
     def run_complete_system(self):
         """Execute the complete professional ML trading system"""
@@ -634,18 +642,18 @@ class ProfessionalMLTradingSystem:
             print("="*80)
             
             print(f"\n⏱️  Total Execution Time: {execution_time:.1f} seconds")
-            print(f"📊 Data Points Processed: {len(df):,}")
-            print(f"🎯 Target Achievement Rate: {target_validation['success_rate']:.1f}%")
-            print(f"📈 ML Strategy Sharpe Ratio: {ml_metrics.get('sharpe_ratio', 0):.3f}")
+            print(f"[INFO] Data Points Processed: {len(df):,}")
+            print(f"[TARGET] Achievement Rate: {target_validation['success_rate']:.1f}%")
+            print(f"[METRIC] ML Strategy Sharpe Ratio: {ml_metrics.get('sharpe_ratio', 0):.3f}")
             print(f"💰 ML Strategy Total Return: {ml_metrics.get('total_return', 0):.2f}%")
             print(f"📉 Maximum Drawdown: {abs(ml_metrics.get('max_drawdown', 0)):.2f}%")
             
             if target_validation['success_rate'] >= 80:
-                print("\n🏆 SYSTEM STATUS: EXCELLENT - Ready for live trading consideration")
+                print("\n[STATUS] EXCELLENT - Ready for live trading consideration")
             elif target_validation['success_rate'] >= 60:
-                print("\n✅ SYSTEM STATUS: GOOD - Consider minor optimizations")
+                print("\n[STATUS] GOOD - Consider minor optimizations")
             else:
-                print("\n⚠️  SYSTEM STATUS: NEEDS IMPROVEMENT - Review model parameters")
+                print("\n[STATUS] NEEDS IMPROVEMENT - Review model parameters")
             
             return {
                 'execution_time': execution_time,
@@ -659,7 +667,7 @@ class ProfessionalMLTradingSystem:
             }
             
         except Exception as e:
-            print(f"\n❌ ERROR: {str(e)}")
+            print(f"\n[ERROR]: {str(e)}")
             import traceback
             traceback.print_exc()
             return None
