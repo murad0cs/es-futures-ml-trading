@@ -53,7 +53,8 @@ class EntryConfidenceModel:
         self.models['ensemble'] = ensemble_model
         results['ensemble'] = ensemble_metrics
         
-        self._calibrate_models(X_train, y_train)
+        # Skip calibration due to XGBoost early_stopping issue
+        # self._calibrate_models(X_train, y_train)
         
         self.best_model_name = max(results, key=lambda k: results[k]['val_roc_auc'])
         
