@@ -100,10 +100,6 @@ coverage.xml
 docs/_build/
 site/
 
-# Output files
-output/
-results/
-reports/
 *.png
 *.jpg
 *.jpeg

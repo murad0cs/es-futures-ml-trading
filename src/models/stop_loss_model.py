@@ -69,7 +69,7 @@ class DynamicStopLossModel:
             }
             
             model = xgb.XGBRegressor(**params, random_state=self.config.random_seed, 
-                                    callbacks=[xgb.callback.EarlyStopping(rounds=50, save_best=True)])
+                                    early_stopping_rounds=50)
             model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
             
             y_pred = model.predict(X_val)
@@ -81,7 +81,7 @@ class DynamicStopLossModel:
         
         best_params = study.best_params
         model = xgb.XGBRegressor(**best_params, random_state=self.config.random_seed,
-                                callbacks=[xgb.callback.EarlyStopping(rounds=50, save_best=True)])
+                                early_stopping_rounds=50)
         model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
         
         y_pred = model.predict(X_val)
@@ -111,7 +111,7 @@ class DynamicStopLossModel:
                 'reg_lambda': trial.suggest_float('reg_lambda', 1e-8, 10.0, log=True),
             }
             
-            model = lgb.LGBMRegressor(**params, random_state=self.config.random_seed)
+            model = lgb.LGBMRegressor(**params, random_state=self.config.random_seed, verbosity=-1)
             model.fit(X_train, y_train, eval_set=[(X_val, y_val)], 
                      callbacks=[lgb.early_stopping(50), lgb.log_evaluation(0)])
             
@@ -123,7 +123,7 @@ class DynamicStopLossModel:
         study.optimize(objective, n_trials=10, show_progress_bar=False)
         
         best_params = study.best_params
-        model = lgb.LGBMRegressor(**best_params, random_state=self.config.random_seed)
+        model = lgb.LGBMRegressor(**best_params, random_state=self.config.random_seed, verbosity=-1)
         model.fit(X_train, y_train, eval_set=[(X_val, y_val)], 
                  callbacks=[lgb.early_stopping(50), lgb.log_evaluation(0)])
         

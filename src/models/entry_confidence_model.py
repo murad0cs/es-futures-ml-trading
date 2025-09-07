@@ -74,8 +74,7 @@ class EntryConfidenceModel:
             }
             
             model = xgb.XGBClassifier(**params, random_state=self.config.random_seed,
-                                     use_label_encoder=False, eval_metric='logloss',
-                                     early_stopping_rounds=50)
+                                     use_label_encoder=False, eval_metric='logloss')
             model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
             
             y_pred_proba = model.predict_proba(X_val)[:, 1]
@@ -87,8 +86,7 @@ class EntryConfidenceModel:
         
         best_params = study.best_params
         model = xgb.XGBClassifier(**best_params, random_state=self.config.random_seed,
-                                 use_label_encoder=False, eval_metric='logloss',
-                                 early_stopping_rounds=50)
+                                 use_label_encoder=False, eval_metric='logloss')
         model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
         
         y_pred = model.predict(X_val)
