@@ -22,10 +22,12 @@ class DataLoader:
         
         # Check if we have saved synthetic data
         import os
-        data_dir = 'data/synthetic'
-        os.makedirs(data_dir, exist_ok=True)
+        from pathlib import Path
+        import sys
+        sys.path.append(str(Path(__file__).parent.parent.parent))
+        from src.utils.paths import get_data_file
         
-        synthetic_file = f"{data_dir}/es_futures_synthetic_{start_date}_{end_date}_{interval}.csv"
+        synthetic_file = get_data_file(f"es_futures_synthetic_{start_date}_{end_date}_{interval}.csv", "synthetic")
         
         # Load saved synthetic data if it exists
         if os.path.exists(synthetic_file):
@@ -136,19 +138,43 @@ class DataLoader:
     def generate_trade_signals(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         
+        # Calculate multiple indicators for signal generation
         df['sma_fast'] = df['close'].rolling(10).mean()
         df['sma_slow'] = df['close'].rolling(30).mean()
+        df['ema_fast'] = df['close'].ewm(span=12).mean()
+        df['ema_slow'] = df['close'].ewm(span=26).mean()
         
-        df['signal'] = 0
-        df.loc[df['sma_fast'] > df['sma_slow'], 'signal'] = 1
-        df.loc[df['sma_fast'] < df['sma_slow'], 'signal'] = -1
+        # Create signal based on crossovers
+        df['sma_signal'] = 0
+        df.loc[df['sma_fast'] > df['sma_slow'], 'sma_signal'] = 1
+        df.loc[df['sma_fast'] < df['sma_slow'], 'sma_signal'] = -1
         
-        df['trade_signal'] = df['signal'].diff()
+        # Detect crossovers (any change from non-positive to positive)
+        df['prev_signal'] = df['sma_signal'].shift(1)
+        df['crossover'] = (df['sma_signal'] == 1) & (df['prev_signal'] <= 0)
         
-        long_signals = df[df['trade_signal'] == 2].copy()
-        long_signals['direction'] = 'long'
+        # Also add EMA crossover signals
+        df['ema_signal'] = 0
+        df.loc[df['ema_fast'] > df['ema_slow'], 'ema_signal'] = 1
+        df.loc[df['ema_fast'] < df['ema_slow'], 'ema_signal'] = -1
+        df['prev_ema_signal'] = df['ema_signal'].shift(1)
+        df['ema_crossover'] = (df['ema_signal'] == 1) & (df['prev_ema_signal'] <= 0)
         
-        signals = long_signals[['direction']].copy()
-        signals['confidence_score'] = 1.0
+        # Combine signals (SMA or EMA crossover)
+        df['trade_entry'] = df['crossover'] | df['ema_crossover']
+        
+        # Filter out signals in the first 30 periods (not enough data for indicators)
+        df.iloc[:30, df.columns.get_loc('trade_entry')] = False
+        
+        # Create signals DataFrame
+        long_signals = df[df['trade_entry']].copy()
+        
+        if len(long_signals) > 0:
+            signals = pd.DataFrame(index=long_signals.index)
+            signals['direction'] = 'long'
+            signals['confidence_score'] = 1.0
+        else:
+            # Return empty DataFrame with correct structure
+            signals = pd.DataFrame(columns=['direction', 'confidence_score'])
         
         return signals

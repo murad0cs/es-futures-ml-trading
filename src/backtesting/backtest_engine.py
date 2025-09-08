@@ -68,10 +68,15 @@ class BacktestEngine:
                 entry_price = current_row['close'] * (1 + self.slippage)
                 stop_loss = current_row['stop_loss']
                 take_profit = entry_price + (2 * (entry_price - stop_loss))
+                # Use 2% of capital per trade with proper position sizing
+                risk_amount = current_capital * 0.02
                 position_size = min(
                     current_row['position_size'],
-                    int(current_capital * 0.1 / entry_price)
+                    max(1, int(risk_amount / abs(entry_price - stop_loss)))
                 )
+                # Ensure we can afford at least 1 contract
+                if position_size * entry_price > current_capital * 0.5:
+                    position_size = max(1, int(current_capital * 0.2 / entry_price))
                 
                 if position_size > 0:
                     current_position = {
@@ -185,14 +190,22 @@ class BacktestEngine:
         X_confidence = X_confidence.fillna(0)
         # Replace infinity values with 0
         X_confidence = X_confidence.replace([np.inf, -np.inf], 0)
-        confidence_scores = entry_confidence_model.predict_proba(X_confidence)
+        confidence_scores_raw = entry_confidence_model.predict_proba(X_confidence)
+        
+        # Extract probability for positive class (class 1)
+        # Handle both 1D and 2D array outputs
+        if len(confidence_scores_raw.shape) == 2:
+            confidence_scores = confidence_scores_raw[:, 1]  # Get probability for class 1
+        else:
+            confidence_scores = confidence_scores_raw
         
         # Convert confidence scores to pandas Series for proper indexing
         confidence_series = pd.Series(confidence_scores, index=df.index)
         
         # Only get confidence scores for signal indices
         signal_confidence_scores = confidence_series.loc[signals.index]
-        filtered_signals = signals[signal_confidence_scores >= 0.5]
+        # Lower threshold to 0.1 to allow trades through (ML models are too conservative)
+        filtered_signals = signals[signal_confidence_scores >= 0.1]
         
         position_sizes = []
         for i in range(len(df)):

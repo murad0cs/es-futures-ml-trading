@@ -275,7 +275,7 @@ class EntryConfidenceModel:
             model_name = self.best_model_name
         
         if use_calibrated and model_name in self.calibrated_models:
-            return self.calibrated_models[model_name].predict_proba(X)[:, 1]
+            return self.calibrated_models[model_name].predict_proba(X)
         
         if model_name == 'ensemble':
             predictions_proba = {}
@@ -288,14 +288,16 @@ class EntryConfidenceModel:
                         predictions_proba[name] = model.predict_proba(X)[:, 1]
             
             pred_df = pd.DataFrame(predictions_proba)
-            return self.models['ensemble']['meta_model'].predict_proba(pred_df)[:, 1]
+            return self.models['ensemble']['meta_model'].predict_proba(pred_df)
         
         elif model_name == 'neural_network':
             X_scaled = self.scalers['standard'].transform(X)
-            return self.models[model_name].predict(X_scaled).flatten()
+            proba = self.models[model_name].predict(X_scaled).flatten()
+            # Convert to 2D array format [prob_class_0, prob_class_1]
+            return np.column_stack([1 - proba, proba])
         
         else:
-            return self.models[model_name].predict_proba(X)[:, 1]
+            return self.models[model_name].predict_proba(X)
     
     def filter_trades(self, trade_signals: pd.DataFrame, 
                      confidence_threshold: float = 0.6) -> pd.DataFrame:
