@@ -32,31 +32,48 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Quick Start
-```python
-from src.main import TradingSystemPipeline
-
-# Run complete pipeline
-pipeline = TradingSystemPipeline()
-results = pipeline.run_complete_pipeline()
-```
-
 ### Running the System
 ```bash
-python src/main.py
+# Activate virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the ML-enhanced trading system
+python professional_system_v2.py
 ```
+
+### System Output
+The system will:
+1. Load and prepare data (synthetic or real)
+2. Train models in Phase 1 (80% historical data)
+3. Perform walk-forward validation in Phase 2 (20% recent data)
+4. Generate comprehensive performance report
+5. Save trained models and results
 
 ## Project Structure
 ```
 es_futures_ml_trading/
+├── professional_system_v2.py    # Main system entry point
 ├── src/
-│   ├── data_pipeline/       # Data loading and feature engineering
-│   ├── models/              # ML models for stop-loss, entry, and sizing
-│   ├── backtesting/         # Backtesting engine and metrics
-│   ├── utils/               # Configuration and utilities
-│   └── main.py             # Main execution pipeline
-├── requirements.txt         # Project dependencies
-└── README.md               # Documentation
+│   ├── data_pipeline/           # Data loading and feature engineering
+│   │   ├── data_loader.py      # Data ingestion and signal generation
+│   │   └── feature_engineering.py  # 85+ technical indicators
+│   ├── models/                  # ML models
+│   │   ├── stop_loss_model.py  # Dynamic stop-loss prediction
+│   │   └── entry_confidence_model.py  # Trade quality scoring
+│   ├── backtesting/             # Backtesting framework
+│   │   ├── backtest_engine.py  # ML-enhanced backtesting
+│   │   ├── performance_metrics.py  # Comprehensive metrics
+│   │   └── position_sizing.py  # Adaptive position sizing
+│   └── utils/                   # Utilities
+│       ├── config.py            # System configuration
+│       └── paths.py             # Centralized path management
+├── data/                        # Market data storage
+├── models/                      # Saved ML models
+├── results/                     # Backtest results
+├── reports/                     # Performance reports
+├── requirements.txt             # Project dependencies
+├── README.md                    # Documentation
+└── IMPLEMENTATION_REVIEW.md     # Detailed implementation review
 ```
 
 ## Performance Targets
@@ -186,12 +203,34 @@ After execution, the system generates:
 - matplotlib, seaborn
 - yfinance (for market data)
 
+## Current Status
+
+### Fully Implemented
+- All three ML models (stop-loss, confidence, position sizing)
+- Two-phase modeling approach with walk-forward validation
+- Comprehensive feature engineering (85+ indicators)
+- Complete backtesting framework with metrics
+- Hyperparameter optimization using Optuna
+- Professional code structure with modular design
+
+### Known Limitations
+- Currently uses synthetic data (real ES futures data needed for production)
+- ML models are conservative due to synthetic data training
+- Performance metrics require real market data for validation
+
+### To Achieve Target Metrics
+1. Replace synthetic data with real ES futures 1-minute data
+2. Retrain models on actual market patterns
+3. Fine-tune confidence thresholds based on real results
+4. Iterate on feature engineering with domain expertise
+
 ## Notes
 
 - The system uses synthetic data if real market data is unavailable
 - All models are automatically tuned using Bayesian optimization
-- Backtesting includes realistic transaction costs
-- The system is designed for 1-minute ES futures data
+- Backtesting includes realistic transaction costs (0.05% commission, 0.01% slippage)
+- The system is designed for 1-minute ES futures data but currently runs on hourly for testing
+- Models use ensemble methods to reduce overfitting
 
 ## License
 
